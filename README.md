@@ -57,6 +57,17 @@ Este admin está diseñado para ser sencillo y accesible, permitiendo a los usua
 
 4. Accede al localhost
 
+5. Configura las variables de entorno para Supabase:
+   ```js
+   // src/supabase/client.js
+   import { createClient } from '@supabase/supabase-js'
+
+   const supabaseUrl = 'TU_SUPABASE_URL'
+   const supabaseKey = 'TU_SUPABASE_KEY'
+
+   export const supabase = createClient(supabaseUrl, supabaseKey)
+   ```
+
 ### Contribuciones
 
 Por ahora no está abierto a contribuciones, pero si cambio de perspectiva se los haré saber c:
