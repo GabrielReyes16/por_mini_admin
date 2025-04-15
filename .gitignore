@@ -22,4 +22,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-src/supabaseclient.js
+src/supabaseClient.js
