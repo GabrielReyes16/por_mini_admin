@@ -6,10 +6,11 @@ const Rutas = () => {
   const [rutas, setRutas] = useState([]);
   const [buses, setBuses] = useState([]);
   const [subidas, setSubidas] = useState([]);
-  const [bajadas, setBajadas] = useState([]);
-  const [destinos, setDestinos] = useState([]);
   const [inicios, setInicios] = useState([]);
-  const [rutaBuses, setRutaBuses] = useState([]); // Para almacenar los buses por ruta
+  const [rutaBuses, setRutaBuses] = useState([
+    { id_bus: "", id_subida: "", id_bajada: "", tiempo: "", comentario: "", precio: "" },
+  ]);
+  const [rutaBusesPorRuta, setRutaBusesPorRuta] = useState({});
   const [form, setForm] = useState({
     id: null,
     id_inicio: "",
@@ -29,28 +30,28 @@ const Rutas = () => {
       { data: rutasData },
       { data: busesData },
       { data: subidasData },
-      { data: bajadasData },
-      { data: destinosData },
       { data: iniciosData },
     ] = await Promise.all([
       supabase.from("ruta").select("*"),
       supabase.from("buses").select("*"),
       supabase.from("subidas").select("*"),
-      supabase.from("bajadas").select("*"),
-      supabase.from("destino").select("*"),
       supabase.from("inicio").select("*"),
     ]);
 
     setRutas(rutasData || []);
     setBuses(busesData || []);
     setSubidas(subidasData || []);
-    setBajadas(bajadasData || []);
-    setDestinos(destinosData || []);
     setInicios(iniciosData || []);
 
-    // Obtener los buses asociados a cada ruta
-    const { data: rutaBusesData } = await supabase.from("ruta_buses").select("*");
-    setRutaBuses(rutaBusesData || []);
+    const busesPorRuta = {};
+    for (const ruta of rutasData || []) {
+      const { data: busesData } = await supabase
+        .from("ruta_buses")
+        .select("*")
+        .eq("id_ruta", ruta.id);
+      busesPorRuta[ruta.id] = busesData || [];
+    }
+    setRutaBusesPorRuta(busesPorRuta);
   };
 
   const handleFormChange = (e) => {
@@ -134,14 +135,17 @@ const Rutas = () => {
   };
 
   const handleEdit = async (ruta) => {
+    resetForm();
+    const { data: rutaBusesData } = await supabase.from("ruta_buses").select("*").eq("id_ruta", ruta.id);
+
     setForm({
       id: ruta.id,
       id_inicio: ruta.id_inicio,
       id_destino: ruta.id_destino,
     });
-
-    const rutaBusesData = await supabase.from("ruta_buses").select("*").eq("id_ruta", ruta.id);
-    setRutaBuses(rutaBusesData.data || []);
+    setRutaBuses(rutaBusesData.length > 0 ? rutaBusesData : [
+      { id_bus: "", id_subida: "", id_bajada: "", tiempo: "", comentario: "", precio: "" }
+    ]);
     setEditMode(true);
   };
 
@@ -160,8 +164,8 @@ const Rutas = () => {
         <div className="col-md-3 border-end pe-4">
           <h4 className="mb-4 text-center">{editMode ? "Editar Ruta" : "Agregar Ruta"}</h4>
           <form onSubmit={handleSubmit}>
-            {[{ name: "id_inicio", label: "Inicio", data: inicios }, { name: "id_destino", label: "Destino", data: destinos }]
-              .map(({ name, label, data }) => (
+            {[{ name: "id_inicio", label: "Inicio" }, { name: "id_destino", label: "Destino" }]
+              .map(({ name, label }) => (
                 <div className="mb-3" key={name}>
                   <label htmlFor={name} className="form-label">{label}</label>
                   <select
@@ -173,7 +177,7 @@ const Rutas = () => {
                     required
                   >
                     <option value="">Seleccionar {label}</option>
-                    {data.map(item => (
+                    {inicios.map(item => (
                       <option key={item.id} value={item.id}>{item.nombre}</option>
                     ))}
                   </select>
@@ -185,7 +189,7 @@ const Rutas = () => {
                 <h6>Bus #{index + 1}</h6>
                 {[{ name: "id_bus", label: "Bus", data: buses, getText: getApodo },
                   { name: "id_subida", label: "Subida", data: subidas },
-                  { name: "id_bajada", label: "Bajada", data: bajadas }]
+                  { name: "id_bajada", label: "Bajada", data: subidas }]
                   .map(({ name, label, data, getText }) => (
                     <div className="mb-2" key={name}>
                       <label className="form-label">{label}</label>
@@ -269,25 +273,18 @@ const Rutas = () => {
                 <div className="card border rounded shadow-sm h-100">
                   <div className="card-body">
                     <h5 className="card-title">
-                      De {getNombre(ruta.id_inicio, inicios)} a {getNombre(ruta.id_destino, destinos)}
+                      De {getNombre(ruta.id_inicio, inicios)} a {getNombre(ruta.id_destino, inicios)}
                     </h5>
-                    <p className="card-text">
-                      <strong>Precio por bus:</strong> {ruta.precio}
-                    </p>
-
-                    {/* Mostrar los buses asociados a la ruta */}
                     <div className="mb-3">
                       <h6>Buses asociados:</h6>
-                      {rutaBuses
-                        .filter((rb) => rb.id_ruta === ruta.id)
-                        .map((rb, index) => (
-                          <div key={index} className="mb-2">
-                            <strong>Bus:</strong> {getApodo(rb.id_bus, buses)}<br />
-                            <strong>Subida:</strong> {getNombre(rb.id_subida, subidas)}<br />
-                            <strong>Bajada:</strong> {getNombre(rb.id_bajada, bajadas)}<br />
-                            <strong>Precio:</strong> {rb.precio}<br />
-                          </div>
-                        ))}
+                      {(rutaBusesPorRuta[ruta.id] || []).map((rb, index) => (
+                        <div key={index} className="mb-2">
+                          <strong>Bus:</strong> {getApodo(rb.id_bus, buses)}<br />
+                          <strong>Subida:</strong> {getNombre(rb.id_subida, subidas)}<br />
+                          <strong>Bajada:</strong> {getNombre(rb.id_bajada, subidas)}<br />
+                          <strong>Precio:</strong> {rb.precio}<br />
+                        </div>
+                      ))}
                     </div>
 
                     <div className="d-flex justify-content-between mt-3">
