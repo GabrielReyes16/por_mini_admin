@@ -6,12 +6,15 @@ import Bajadas from './pages/Bajadas'
 import Inicios from './pages/Inicios'
 import Destinos from './pages/Destinos'
 import Rutas from './pages/Rutas'
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
 
 function App() {
   return (
     <Router>
       <Navbar />
       <Routes>
+      <Route path="/" element={<Buses />} />
         <Route path="/buses" element={<Buses />} />
         <Route path="/subidas" element={<Subidas />} />
         <Route path="/bajadas" element={<Bajadas />} />

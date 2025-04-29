@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Asegúrate de incluir Bootstrap JS
 
 const Navbar = () => {
   return (
@@ -13,6 +14,9 @@ const Navbar = () => {
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
         >
           <span className="navbar-toggler-icon"></span>
         </button>
@@ -25,13 +29,7 @@ const Navbar = () => {
               <Link className="nav-link" to="/subidas">Subidas</Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/bajadas">Bajadas</Link>
-            </li>
-            <li className="nav-item">
               <Link className="nav-link" to="/inicios">Inicios</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/destinos">Destinos</Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/rutas">Rutas</Link>
