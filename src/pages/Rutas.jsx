@@ -6,8 +6,9 @@ const Rutas = () => {
   const [rutas, setRutas] = useState([]);
   const [buses, setBuses] = useState([]);
   const [subidas, setSubidas] = useState([]);
+  const [bajadas, setBajadas] = useState([]); // Se añadió para obtener las bajadas
   const [inicios, setInicios] = useState([]);
-  const [rutaBuses, setRutaBuses] = useState([
+  const [rutaBuses, setRutaBuses] = useState([ // Inicializar en blanco
     { id_bus: "", id_subida: "", id_bajada: "", tiempo: "", comentario: "", precio: "" },
   ]);
   const [rutaBusesPorRuta, setRutaBusesPorRuta] = useState({});
@@ -30,17 +31,20 @@ const Rutas = () => {
       { data: rutasData },
       { data: busesData },
       { data: subidasData },
+      { data: bajadasData }, // Obtener bajadas
       { data: iniciosData },
     ] = await Promise.all([
       supabase.from("ruta").select("*"),
       supabase.from("buses").select("*"),
       supabase.from("subidas").select("*"),
+      supabase.from("bajadas").select("*"), // Obtener bajadas
       supabase.from("inicio").select("*"),
     ]);
 
     setRutas(rutasData || []);
     setBuses(busesData || []);
     setSubidas(subidasData || []);
+    setBajadas(bajadasData || []); // Establecer bajadas
     setInicios(iniciosData || []);
 
     const busesPorRuta = {};
@@ -164,32 +168,31 @@ const Rutas = () => {
         <div className="col-md-3 border-end pe-4">
           <h4 className="mb-4 text-center">{editMode ? "Editar Ruta" : "Agregar Ruta"}</h4>
           <form onSubmit={handleSubmit}>
-            {[{ name: "id_inicio", label: "Inicio" }, { name: "id_destino", label: "Destino" }]
-              .map(({ name, label }) => (
-                <div className="mb-3" key={name}>
-                  <label htmlFor={name} className="form-label">{label}</label>
-                  <select
-                    id={name}
-                    name={name}
-                    className="form-select"
-                    value={form[name]}
-                    onChange={handleFormChange}
-                    required
-                  >
-                    <option value="">Seleccionar {label}</option>
-                    {inicios.map(item => (
-                      <option key={item.id} value={item.id}>{item.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+            {[{ name: "id_inicio", label: "Inicio" }, { name: "id_destino", label: "Destino" }].map(({ name, label }) => (
+              <div className="mb-3" key={name}>
+                <label htmlFor={name} className="form-label">{label}</label>
+                <select
+                  id={name}
+                  name={name}
+                  className="form-select"
+                  value={form[name]}
+                  onChange={handleFormChange}
+                  required
+                >
+                  <option value="">Seleccionar {label}</option>
+                  {inicios.map(item => (
+                    <option key={item.id} value={item.id}>{item.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
 
             {rutaBuses.map((rb, index) => (
               <div key={index} className="border p-3 mb-3 rounded bg-light">
                 <h6>Bus #{index + 1}</h6>
                 {[{ name: "id_bus", label: "Bus", data: buses, getText: getApodo },
                   { name: "id_subida", label: "Subida", data: subidas },
-                  { name: "id_bajada", label: "Bajada", data: subidas }]
+                  { name: "id_bajada", label: "Bajada", data: bajadas }] // Cambié "subidas" por "bajadas"
                   .map(({ name, label, data, getText }) => (
                     <div className="mb-2" key={name}>
                       <label className="form-label">{label}</label>
@@ -209,6 +212,7 @@ const Rutas = () => {
                       </select>
                     </div>
                   ))}
+
                 <div className="mb-2">
                   <label className="form-label">Tiempo</label>
                   <input
@@ -225,17 +229,15 @@ const Rutas = () => {
                   <textarea
                     name="comentario"
                     className="form-control"
-                    rows="2"
+                    rows="3"
                     value={rb.comentario}
                     onChange={(e) => handleRutaBusChange(index, e)}
-                    required
-                  ></textarea>
+                  />
                 </div>
                 <div className="mb-2">
                   <label className="form-label">Precio</label>
                   <input
                     type="number"
-                    step="0.01"
                     name="precio"
                     className="form-control"
                     value={rb.precio}
@@ -245,60 +247,39 @@ const Rutas = () => {
                 </div>
               </div>
             ))}
-            <div className="text-center mb-3">
-              <button type="button" className="btn btn-secondary btn-sm" onClick={addRutaBus}>Agregar otro bus</button>
-            </div>
 
-            {error && <div className="alert alert-danger">{error}</div>}
-            {success && <div className="alert alert-success">{success}</div>}
-
-            <div className="d-flex justify-content-center gap-2 mt-4">
-              <button type="submit" className="btn btn-primary px-4">
-                {editMode ? "Actualizar" : "Agregar"}
-              </button>
-              {editMode && (
-                <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>
-                  Cancelar
-                </button>
-              )}
+            <div className="d-flex justify-content-between">
+              <button type="button" className="btn btn-outline-secondary" onClick={addRutaBus}>Agregar Bus</button>
+              <button type="submit" className="btn btn-primary">{editMode ? "Guardar Cambios" : "Agregar Ruta"}</button>
             </div>
           </form>
+          {error && <div className="alert alert-danger mt-3">{error}</div>}
+          {success && <div className="alert alert-success mt-3">{success}</div>}
         </div>
-
-        <div className="col-md-9 ps-4" style={{ maxHeight: "80vh", overflowY: "auto" }}>
-          <h4 className="mb-4">Rutas Registradas</h4>
-          <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {rutas.map((ruta) => (
-              <div key={ruta.id} className="col">
-                <div className="card border rounded shadow-sm h-100">
-                  <div className="card-body">
-                    <h5 className="card-title">
-                      De {getNombre(ruta.id_inicio, inicios)} a {getNombre(ruta.id_destino, inicios)}
-                    </h5>
-                    <div className="mb-3">
-                      <h6>Buses asociados:</h6>
-                      {(rutaBusesPorRuta[ruta.id] || []).map((rb, index) => (
-                        <div key={index} className="mb-2">
-                          <strong>Bus:</strong> {getApodo(rb.id_bus, buses)}<br />
-                          <strong>Subida:</strong> {getNombre(rb.id_subida, subidas)}<br />
-                          <strong>Bajada:</strong> {getNombre(rb.id_bajada, subidas)}<br />
-                          <strong>Precio:</strong> {rb.precio}<br />
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="d-flex justify-content-between mt-3">
-                      <button className="btn btn-outline-warning btn-sm" onClick={() => handleEdit(ruta)}>
-                        Editar
-                      </button>
-                      <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(ruta.id)}>
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+        <div className="col-md-9">
+          <h4 className="mb-4">Listado de Rutas</h4>
+          <div className="table-responsive">
+            <table className="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>Inicio</th>
+                  <th>Destino</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rutas.map((ruta) => (
+                  <tr key={ruta.id}>
+                    <td>{getNombre(ruta.id_inicio, inicios)}</td>
+                    <td>{getNombre(ruta.id_destino, inicios)}</td>
+                    <td>
+                      <button className="btn btn-warning btn-sm" onClick={() => handleEdit(ruta)}>Editar</button>
+                      <button className="btn btn-danger btn-sm ms-2" onClick={() => handleDelete(ruta.id)}>Eliminar</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
