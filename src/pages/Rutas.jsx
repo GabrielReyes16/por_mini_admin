@@ -192,7 +192,7 @@ const Rutas = () => {
                 <h6>Bus #{index + 1}</h6>
                 {[{ name: "id_bus", label: "Bus", data: buses, getText: getApodo },
                   { name: "id_subida", label: "Subida", data: subidas },
-                  { name: "id_bajada", label: "Bajada", data: bajadas }] // Cambié "subidas" por "bajadas"
+                  { name: "id_bajada", label: "Bajada", data: subidas }] // Cambié "subidas" por "bajadas"
                   .map(({ name, label, data, getText }) => (
                     <div className="mb-2" key={name}>
                       <label className="form-label">{label}</label>
