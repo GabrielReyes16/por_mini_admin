@@ -114,22 +114,6 @@ const Inicios = () => {
                   required
                 />
               </div>
-              <div className="mb-3">
-                <label className="form-label" htmlFor="foto">Foto</label>
-                <input
-                  type="file"
-                  name="foto"
-                  className="form-control"
-                  accept="image/*"
-                  id="foto"
-                  onChange={handleChange}
-                />
-              </div>
-              {preview && (
-                <div className="text-center mb-3">
-                  <img src={preview} alt="Preview" className="img-thumbnail" width={150} />
-                </div>
-              )}
               {error && <div className="alert alert-danger">{error}</div>}
               {success && <div className="alert alert-success">{success}</div>}
               <div className="d-flex justify-content-center gap-3 mt-3">
@@ -163,12 +147,6 @@ const Inicios = () => {
             {inicios.map((inicio) => (
               <div key={inicio.id} className="col">
                 <div className="card h-100 border rounded shadow-sm">
-                  <img
-                    src={inicio.url_foto}
-                    className="card-img-top"
-                    alt={inicio.nombre}
-                    style={{ height: "160px", objectFit: "cover" }}
-                  />
                   <div className="card-body">
                     <h5 className="card-title">{inicio.nombre}</h5>
                     <div className="d-flex justify-content-between">

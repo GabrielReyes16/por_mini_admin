@@ -154,21 +154,7 @@ const Subidas = () => {
                   required
                 />
               </div>
-              <div className="mb-3">
-                <label className="form-label" htmlFor="foto" >Foto</label>
-                <input
-                  type="file"
-                  name="foto"
-                  className="form-control"
-                  accept="image/*"
-                  onChange={handleChange}
-                />
-              </div>
-              {preview && (
-                <div className="text-center mb-3">
-                  <img src={preview} alt="Preview" className="img-thumbnail" width={150} />
-                </div>
-              )}
+             
               {error && <div className="alert alert-danger">{error}</div>}
               {success && <div className="alert alert-success">{success}</div>}
               <div className="d-flex justify-content-center gap-3 mt-3">
@@ -202,12 +188,7 @@ const Subidas = () => {
             {subidas.map((subida) => (
               <div key={subida.id} className="col">
                 <div className="card h-100 border rounded shadow-sm">
-                  <img
-                    src={subida.url_foto}
-                    className="card-img-top"
-                    alt={subida.nombre}
-                    style={{ height: "160px", objectFit: "cover" }}
-                  />
+                  
                   <div className="card-body">
                     <h5 className="card-title">{subida.nombre}</h5>
                     <p className="card-text mb-2">
