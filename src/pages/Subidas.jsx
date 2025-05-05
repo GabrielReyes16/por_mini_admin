@@ -118,7 +118,7 @@ const Subidas = () => {
       setPreview(null);
       setEditMode(false);
       setPosition(null);
-      fetchSubidas();
+      await fetchSubidas();
     }
   };
 

@@ -3,6 +3,9 @@
       "env": {
         "ROLLUP_NO_NATIVE": "true"
       }
-    }
+    },
+    "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
   }
   
