@@ -3,7 +3,35 @@ import { supabase } from "../supabaseClient";
 import { uploadPhoto, deletePhoto } from "../supabaseStorage";
 
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'leaflet/dist/leaflet.css';
 
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+
+// === Componente de Mapa ===
+const LocationMarker = ({ setCoords, position, setPosition }) => {
+  useMapEvents({
+    click(e) {
+      setPosition(e.latlng);
+      setCoords(e.latlng); // { lat, lng }
+    },
+  });
+
+  return position ? <Marker position={position} /> : null;
+};
+
+const MapaSelector = ({ setCoords, position, setPosition }) => {
+  return (
+    <MapContainer center={[-12.0464, -77.0428]} zoom={13} style={{ height: "300px", width: "100%" }}>
+      <TileLayer
+        attribution='&copy; OpenStreetMap contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <LocationMarker setCoords={setCoords} position={position} setPosition={setPosition} />
+    </MapContainer>
+  );
+};
+
+// === Componente principal ===
 const Subidas = () => {
   const [subidas, setSubidas] = useState([]);
   const [form, setForm] = useState({
@@ -15,10 +43,11 @@ const Subidas = () => {
     eje_y: "",
   });
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [position, setPosition] = useState(null);
+
 
   useEffect(() => {
     document.title = "Subidas - Admin";
@@ -47,6 +76,7 @@ const Subidas = () => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+
 
     let urlFoto = form.url_foto;
 
@@ -87,6 +117,7 @@ const Subidas = () => {
       setFile(null);
       setPreview(null);
       setEditMode(false);
+      setPosition(null);
       fetchSubidas();
     }
   };
@@ -95,12 +126,18 @@ const Subidas = () => {
     setForm(subida);
     setEditMode(true);
     setPreview(subida.url_foto);
+  
+    // Asegúrate de que las coordenadas sean números válidos antes de setearlas
+    const lat = parseFloat(subida.eje_x);
+    const lng = parseFloat(subida.eje_y);
+  
+    if (!isNaN(lat) && !isNaN(lng)) {
+      setPosition({ lat, lng });
+    }
   };
 
   const handleDelete = async (id, url_foto) => {
-    if (url_foto) await deleteBusPhoto(url_foto);
-    await deletePhoto(url_foto);
-
+    if (url_foto) await deletePhoto(url_foto);
     fetchSubidas();
   };
 
@@ -133,7 +170,21 @@ const Subidas = () => {
                 />
               </div>
               <div className="mb-3">
-                <label className="form-label" htmlFor="eje x">Eje X</label>
+                <label htmlFor="mapa" className="form-label">Selecciona ubicación en el mapa</label>
+                <MapaSelector
+                  setCoords={({ lat, lng }) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      eje_x: lat.toString(),
+                      eje_y: lng.toString(),
+                    }))
+                  }
+                  position={position}
+                  setPosition={setPosition}
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="eje x" className="form-label">Eje X</label>
                 <input
                   type="text"
                   name="eje_x"
@@ -144,7 +195,7 @@ const Subidas = () => {
                 />
               </div>
               <div className="mb-3">
-                <label className="form-label" htmlFor="eje y">Eje Y</label>
+                <label className="form-label">Eje Y</label>
                 <input
                   type="text"
                   name="eje_y"
@@ -154,7 +205,7 @@ const Subidas = () => {
                   required
                 />
               </div>
-             
+
               {error && <div className="alert alert-danger">{error}</div>}
               {success && <div className="alert alert-success">{success}</div>}
               <div className="d-flex justify-content-center gap-3 mt-3">
@@ -188,7 +239,6 @@ const Subidas = () => {
             {subidas.map((subida) => (
               <div key={subida.id} className="col">
                 <div className="card h-100 border rounded shadow-sm">
-                  
                   <div className="card-body">
                     <h5 className="card-title">{subida.nombre}</h5>
                     <p className="card-text mb-2">

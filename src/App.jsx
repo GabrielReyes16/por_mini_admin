@@ -7,6 +7,8 @@ import Inicios from './pages/Inicios'
 import Destinos from './pages/Destinos'
 import Rutas from './pages/Rutas'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import 'leaflet/dist/leaflet.css';
+
 
 
 function App() {
