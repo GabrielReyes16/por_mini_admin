@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const Rutas = () => {
   const [rutas, setRutas] = useState([]);
   const [buses, setBuses] = useState([]);
   const [subidas, setSubidas] = useState([]);
-  const [bajadas, setBajadas] = useState([]); // Se añadió para obtener las bajadas
+  const [bajadas, setBajadas] = useState([]);
   const [inicios, setInicios] = useState([]);
-  const [rutaBuses, setRutaBuses] = useState([ // Inicializar en blanco
-    { id_bus: "", id_subida: "", id_bajada: "", tiempo: "", comentario: "", precio: "" },
+  const [rutaBuses, setRutaBuses] = useState([
+    {
+      id_bus: "",
+      id_subida: "",
+      id_bajada: "",
+      tiempo: "",
+      comentario: "",
+      precio: "",
+    },
   ]);
   const [rutaBusesPorRuta, setRutaBusesPorRuta] = useState({});
   const [form, setForm] = useState({
@@ -31,20 +38,20 @@ const Rutas = () => {
       { data: rutasData },
       { data: busesData },
       { data: subidasData },
-      { data: bajadasData }, // Obtener bajadas
+      { data: bajadasData },
       { data: iniciosData },
     ] = await Promise.all([
       supabase.from("ruta").select("*"),
       supabase.from("buses").select("*"),
       supabase.from("subidas").select("*"),
-      supabase.from("bajadas").select("*"), // Obtener bajadas
+      supabase.from("bajadas").select("*"),
       supabase.from("inicio").select("*"),
     ]);
 
     setRutas(rutasData || []);
     setBuses(busesData || []);
     setSubidas(subidasData || []);
-    setBajadas(bajadasData || []); // Establecer bajadas
+    setBajadas(bajadasData || []);
     setInicios(iniciosData || []);
 
     const busesPorRuta = {};
@@ -75,7 +82,14 @@ const Rutas = () => {
   const addRutaBus = () => {
     setRutaBuses([
       ...rutaBuses,
-      { id_bus: "", id_subida: "", id_bajada: "", tiempo: "", comentario: "", precio: "" },
+      {
+        id_bus: "",
+        id_subida: "",
+        id_bajada: "",
+        tiempo: "",
+        comentario: "",
+        precio: "",
+      },
     ]);
   };
 
@@ -84,7 +98,13 @@ const Rutas = () => {
     setError(null);
     setSuccess(null);
 
-    if (!form.id_inicio || !form.id_destino || rutaBuses.some((rb) => !rb.id_bus || !rb.id_subida || !rb.id_bajada || !rb.precio)) {
+    if (
+      !form.id_inicio ||
+      !form.id_destino ||
+      rutaBuses.some(
+        (rb) => !rb.id_bus || !rb.id_subida || !rb.id_bajada || !rb.precio
+      )
+    ) {
       setError("Todos los campos deben estar completos.");
       return;
     }
@@ -98,12 +118,18 @@ const Rutas = () => {
       };
 
       if (editMode && rutaId) {
-        const { error: errorRuta } = await supabase.from("ruta").update(rutaData).eq("id", rutaId);
+        const { error: errorRuta } = await supabase
+          .from("ruta")
+          .update(rutaData)
+          .eq("id", rutaId);
         if (errorRuta) throw errorRuta;
 
         await supabase.from("ruta_buses").delete().eq("id_ruta", rutaId);
       } else {
-        const { data, error: errorRuta } = await supabase.from("ruta").insert([rutaData]).select();
+        const { data, error: errorRuta } = await supabase
+          .from("ruta")
+          .insert([rutaData])
+          .select();
         if (errorRuta) throw errorRuta;
         rutaId = data[0].id;
       }
@@ -118,10 +144,14 @@ const Rutas = () => {
         precio: parseFloat(rb.precio) || 0,
       }));
 
-      const { error: errorRB } = await supabase.from("ruta_buses").insert(busesInsert);
+      const { error: errorRB } = await supabase
+        .from("ruta_buses")
+        .insert(busesInsert);
       if (errorRB) throw errorRB;
 
-      setSuccess(editMode ? "Ruta actualizada con éxito." : "Ruta agregada con éxito.");
+      setSuccess(
+        editMode ? "Ruta actualizada con éxito." : "Ruta agregada con éxito."
+      );
       resetForm();
       fetchData();
     } catch (err) {
@@ -132,7 +162,16 @@ const Rutas = () => {
 
   const resetForm = () => {
     setForm({ id: null, id_inicio: "", id_destino: "" });
-    setRutaBuses([{ id_bus: "", id_subida: "", id_bajada: "", tiempo: "", comentario: "", precio: "" }]);
+    setRutaBuses([
+      {
+        id_bus: "",
+        id_subida: "",
+        id_bajada: "",
+        tiempo: "",
+        comentario: "",
+        precio: "",
+      },
+    ]);
     setEditMode(false);
     setError(null);
     setSuccess(null);
@@ -140,16 +179,30 @@ const Rutas = () => {
 
   const handleEdit = async (ruta) => {
     resetForm();
-    const { data: rutaBusesData } = await supabase.from("ruta_buses").select("*").eq("id_ruta", ruta.id);
+    const { data: rutaBusesData } = await supabase
+      .from("ruta_buses")
+      .select("*")
+      .eq("id_ruta", ruta.id);
 
     setForm({
       id: ruta.id,
       id_inicio: ruta.id_inicio,
       id_destino: ruta.id_destino,
     });
-    setRutaBuses(rutaBusesData.length > 0 ? rutaBusesData : [
-      { id_bus: "", id_subida: "", id_bajada: "", tiempo: "", comentario: "", precio: "" }
-    ]);
+    setRutaBuses(
+      rutaBusesData.length > 0
+        ? rutaBusesData
+        : [
+            {
+              id_bus: "",
+              id_subida: "",
+              id_bajada: "",
+              tiempo: "",
+              comentario: "",
+              precio: "",
+            },
+          ]
+    );
     setEditMode(true);
   };
 
@@ -159,18 +212,116 @@ const Rutas = () => {
     fetchData();
   };
 
-  const getNombre = (id, list) => list.find((i) => i.id === id)?.nombre || `ID ${id}`;
-  const getApodo = (id, list) => list.find((i) => i.id === id)?.apodo || `ID ${id}`;
+  const getNombre = (id, list) =>
+    list.find((i) => i.id === id)?.nombre || `ID ${id}`;
+  const getApodo = (id, list) =>
+    list.find((i) => i.id === id)?.apodo || `ID ${id}`;
+
+  const ListadoRutas = ({ 
+    rutas, 
+    inicios, 
+    rutaBusesPorRuta, 
+    buses, 
+    handleEdit, 
+    handleDelete 
+  }) => {
+    const [paginaActual, ] = useState(1);
+    const rutasPorPagina = 5;
+
+    const rutasAgrupadas = inicios
+      .map((inicio) => {
+        const rutasDeInicio = rutas.filter((r) => r.id_inicio === inicio.id);
+        return {
+          inicio,
+          rutas: rutasDeInicio.map((ruta) => {
+            const busesDeRuta = (rutaBusesPorRuta[ruta.id] || [])
+              .map((rb) => {
+                const bus = buses.find((b) => b.id === rb.id_bus);
+                return bus?.apodo || "Sin apodo";
+              });
+
+            return {
+              ...ruta,
+              destino: inicios.find((i) => i.id === ruta.id_destino),
+              buses: busesDeRuta,
+            };
+          }),
+        };
+      })
+      .filter((grupo) => grupo.rutas.length > 0);
+
+    const inicioIndex = (paginaActual - 1) * rutasPorPagina;
+    const rutasPaginadas = rutasAgrupadas.slice(
+      inicioIndex,
+      inicioIndex + rutasPorPagina
+    );
+
+
+    return (
+      <>
+        <h4 className="mb-4">Listado de Rutas</h4>
+        {rutasPaginadas.map((grupo) => (
+          <div key={grupo.inicio.id} className="mb-4">
+            <h5>Inicio: {grupo.inicio.nombre}</h5>
+            <div className="table-responsive">
+              <table className="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>Destino</th>
+                    <th>Buses</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {grupo.rutas.map((ruta) => (
+                    <tr key={ruta.id}>
+                      <td>{ruta.destino?.nombre || "Desconocido"}</td>
+                      <td>
+                        {ruta.buses.length > 0
+                          ? ruta.buses.join(", ")
+                          : "Sin buses"}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-warning btn-sm"
+                          onClick={() => handleEdit(ruta)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm ms-2"
+                          onClick={() => handleDelete(ruta.id)}
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+      </>
+    );
+  };
 
   return (
     <div className="container-fluid py-5">
       <div className="row">
         <div className="col-md-3 border-end pe-4">
-          <h4 className="mb-4 text-center">{editMode ? "Editar Ruta" : "Agregar Ruta"}</h4>
+          <h4 className="mb-4 text-center">
+            {editMode ? "Editar Ruta" : "Agregar Ruta"}
+          </h4>
           <form onSubmit={handleSubmit}>
-            {[{ name: "id_inicio", label: "Inicio" }, { name: "id_destino", label: "Destino" }].map(({ name, label }) => (
+            {[
+              { name: "id_inicio", label: "Inicio" },
+              { name: "id_destino", label: "Destino" },
+            ].map(({ name, label }) => (
               <div className="mb-3" key={name}>
-                <label htmlFor={name} className="form-label">{label}</label>
+                <label htmlFor={name} className="form-label">
+                  {label}
+                </label>
                 <select
                   id={name}
                   name={name}
@@ -180,8 +331,10 @@ const Rutas = () => {
                   required
                 >
                   <option value="">Seleccionar {label}</option>
-                  {inicios.map(item => (
-                    <option key={item.id} value={item.id}>{item.nombre}</option>
+                  {inicios.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.nombre}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -190,28 +343,34 @@ const Rutas = () => {
             {rutaBuses.map((rb, index) => (
               <div key={index} className="border p-3 mb-3 rounded bg-light">
                 <h6>Bus #{index + 1}</h6>
-                {[{ name: "id_bus", label: "Bus", data: buses, getText: getApodo },
+                {[
+                  {
+                    name: "id_bus",
+                    label: "Bus",
+                    data: buses,
+                    getText: getApodo,
+                  },
                   { name: "id_subida", label: "Subida", data: subidas },
-                  { name: "id_bajada", label: "Bajada", data: subidas }] // Cambié "subidas" por "bajadas"
-                  .map(({ name, label, data, getText }) => (
-                    <div className="mb-2" key={name}>
-                      <label className="form-label">{label}</label>
-                      <select
-                        name={name}
-                        className="form-select"
-                        value={rb[name]}
-                        onChange={(e) => handleRutaBusChange(index, e)}
-                        required
-                      >
-                        <option value="">Seleccionar {label}</option>
-                        {data.map(item => (
-                          <option key={item.id} value={item.id}>
-                            {getText ? getText(item.id, data) : item.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
+                  { name: "id_bajada", label: "Bajada", data: bajadas },
+                ].map(({ name, label, data, getText = getNombre }) => (
+                  <div className="mb-2" key={name}>
+                    <label className="form-label">{label}</label>
+                    <select
+                      name={name}
+                      className="form-select"
+                      value={rb[name]}
+                      onChange={(e) => handleRutaBusChange(index, e)}
+                      required={name !== "comentario"}
+                    >
+                      <option value="">Seleccionar {label}</option>
+                      {data.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {getText(item.id, data)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
 
                 <div className="mb-2">
                   <label className="form-label">Tiempo</label>
@@ -221,7 +380,6 @@ const Rutas = () => {
                     className="form-control"
                     value={rb.tiempo}
                     onChange={(e) => handleRutaBusChange(index, e)}
-                    required
                   />
                 </div>
                 <div className="mb-2">
@@ -249,38 +407,30 @@ const Rutas = () => {
             ))}
 
             <div className="d-flex justify-content-between">
-              <button type="button" className="btn btn-outline-secondary" onClick={addRutaBus}>Agregar Bus</button>
-              <button type="submit" className="btn btn-primary">{editMode ? "Guardar Cambios" : "Agregar Ruta"}</button>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={addRutaBus}
+              >
+                Agregar Bus
+              </button>
+              <button type="submit" className="btn btn-primary">
+                {editMode ? "Guardar Cambios" : "Agregar Ruta"}
+              </button>
             </div>
           </form>
           {error && <div className="alert alert-danger mt-3">{error}</div>}
           {success && <div className="alert alert-success mt-3">{success}</div>}
         </div>
-        <div className="col-md-9">
-          <h4 className="mb-4">Listado de Rutas</h4>
-          <div className="table-responsive">
-            <table className="table table-bordered table-hover">
-              <thead>
-                <tr>
-                  <th>Inicio</th>
-                  <th>Destino</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rutas.map((ruta) => (
-                  <tr key={ruta.id}>
-                    <td>{getNombre(ruta.id_inicio, inicios)}</td>
-                    <td>{getNombre(ruta.id_destino, inicios)}</td>
-                    <td>
-                      <button className="btn btn-warning btn-sm" onClick={() => handleEdit(ruta)}>Editar</button>
-                      <button className="btn btn-danger btn-sm ms-2" onClick={() => handleDelete(ruta.id)}>Eliminar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="col-md-9" style={{ height: "100vh", overflowY: "auto" }}>
+          <ListadoRutas
+            rutas={rutas}
+            inicios={inicios}
+            rutaBusesPorRuta={rutaBusesPorRuta}
+            buses={buses}
+            handleEdit={handleEdit}
+            handleDelete={handleDelete}
+          />
         </div>
       </div>
     </div>

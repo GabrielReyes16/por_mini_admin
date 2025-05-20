@@ -7,7 +7,7 @@ const Navbar = () => {
     <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
       <div className="container">
         <Link className="navbar-brand fw-bold" to="/">
-          Panel Admin
+          P. O.R Mini Admin
         </Link>
         <button
           className="navbar-toggler"
