@@ -351,7 +351,7 @@ const Rutas = () => {
                     getText: getApodo,
                   },
                   { name: "id_subida", label: "Subida", data: subidas },
-                  { name: "id_bajada", label: "Bajada", data: bajadas },
+                  { name: "id_bajada", label: "Bajada", data: subidas},
                 ].map(({ name, label, data, getText = getNombre }) => (
                   <div className="mb-2" key={name}>
                     <label className="form-label">{label}</label>
