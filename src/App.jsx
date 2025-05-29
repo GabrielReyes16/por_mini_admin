@@ -6,6 +6,7 @@ import Bajadas from './pages/Bajadas'
 import Inicios from './pages/Inicios'
 import Destinos from './pages/Destinos'
 import Rutas from './pages/Rutas'
+import Paradas from './pages/paradas/Paradas'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import 'leaflet/dist/leaflet.css';
 
@@ -23,6 +24,7 @@ function App() {
         <Route path="/inicios" element={<Inicios />} />
         <Route path="/destinos" element={<Destinos />} />
         <Route path="/rutas" element={<Rutas />} />
+        <Route path="/paradas" element={<Paradas />} />
       </Routes>
     </Router>
   )
