@@ -324,6 +324,10 @@ const Paradas = () => {
                     <div className="card-body">
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <h5 className="card-title mb-1">{parada.nombre}</h5>
+                          {parada.ab && <span className="badge bg-success me-1">A &rarr; B</span>}
+                          {parada.ba && <span className="badge bg-info">B &rarr; A</span>}
+                          {!parada.ab && !parada.ba && <span className="badge bg-secondary">N/A</span>}
+  
                         <div className="d-flex gap-2">
                           <button 
                             className="btn btn-sm btn-warning" 
@@ -343,37 +347,15 @@ const Paradas = () => {
                       </div>
 
                       <div className="mb-2">
-                        <small className="text-muted">Bus:</small>
                         <div className="fw-semibold text-primary">
                           {parada.buses?.apodo} - {parada.buses?.nombre}
                         </div>
                       </div>
-
-                      {(parada.eje_x || parada.eje_y) && (
-                        <div className="mb-2">
-                          <small className="text-muted">Coordenadas:</small>
-                          <div className="small font-monospace">
-                            X: {parada.eje_x || 'N/A'}, Y: {parada.eje_y || 'N/A'}
-                          </div>
-                        </div>
-                      )}
-
                       {parada.comentario && (
                         <div className="mb-2">
-                          <small className="text-muted">Comentario:</small>
                           <div className="small">{parada.comentario}</div>
                         </div>
                       )}
-                      
-                      {/* New: Display ab/ba status */}
-                      <div className="mb-2">
-                        <small className="text-muted">Dirección:</small>
-                        <div className="small">
-                          {parada.ab && <span className="badge bg-success me-1">A &rarr; B</span>}
-                          {parada.ba && <span className="badge bg-info">B &rarr; A</span>}
-                          {!parada.ab && !parada.ba && <span className="badge bg-secondary">N/A</span>}
-                        </div>
-                      </div>
 
                       <div className="mt-2">
                         <small className="text-muted">
