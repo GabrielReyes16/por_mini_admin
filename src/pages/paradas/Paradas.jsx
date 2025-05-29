@@ -1,18 +1,20 @@
-import { useEffect, useState } from "react"; // Import useState
+import { useEffect, useState } from "react";
 import useParadas from "./useParadas";
 import MapaSelector from "../../components/MapaSelector";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Paradas = () => {
-  // State to hold the currently selected bus ID for filtering the stops list.
-  // Initialized to an empty string to represent "Todas las Rutas" (All Routes).
+  // State for the selected bus ID for filtering the stops list.
   const [selectedBusFilter, setSelectedBusFilter] = useState(""); 
+  // New state for the selected direction filter (e.g., "ab" or "ba").
+  const [selectedDirectionFilter, setSelectedDirectionFilter] = useState("");
 
   // Destructure values and functions from the custom useParadas hook.
-  // We pass selectedBusFilter to the hook so it can filter the stops.
+  // We now pass both selectedBusFilter and selectedDirectionFilter to the hook.
   const {
     paradas,
     buses,
+    selectedBusDetails, // New: details of the currently selected bus (for inicio_a/b)
     form,
     editMode,
     error,
@@ -23,9 +25,9 @@ const Paradas = () => {
     handleEdit,
     handleDelete,
     resetForm,
-    setForm, // This setForm is the one exported by the hook, used for map coordinates
-    fetchParadas // Exported to allow manual re-fetching if needed (e.g., after CRUD operations)
-  } = useParadas(selectedBusFilter); // Pass the filter state to the hook
+    setForm,
+    fetchParadas 
+  } = useParadas(selectedBusFilter, selectedDirectionFilter); // Pass both filters
 
   // Effect to set the document title when the component mounts.
   useEffect(() => {
@@ -33,12 +35,15 @@ const Paradas = () => {
   }, []);
 
   // Handler for when the bus filter dropdown changes.
-  // It updates the selectedBusFilter state, which in turn will trigger
-  // the data fetching in the useParadas hook.
   const handleBusFilterChange = (e) => {
     setSelectedBusFilter(e.target.value);
-    // The actual fetching of paradas based on this filter is handled
-    // by a useEffect inside the useParadas hook that watches selectedBusFilter.
+    // When the bus changes, reset the direction filter to avoid inconsistencies.
+    setSelectedDirectionFilter(""); 
+  };
+
+  // Handler for when the direction filter dropdown changes.
+  const handleDirectionFilterChange = (e) => {
+    setSelectedDirectionFilter(e.target.value);
   };
 
   return (
@@ -65,7 +70,6 @@ const Paradas = () => {
                   required
                 >
                   <option value="">Seleccione un bus</option>
-                  {/* Map through the 'buses' array to populate options */}
                   {buses.map((bus) => (
                     <option key={bus.id} value={bus.id}>
                       {bus.apodo} - {bus.nombre}
@@ -138,20 +142,18 @@ const Paradas = () => {
                   Haz clic en el mapa para seleccionar las coordenadas automáticamente
                 </small>
                 <div className="border rounded">
-                  {/* MapaSelector component to pick coordinates */}
                   <MapaSelector setCoords={(coords) => {
-                    // Update form state with selected coordinates from the map
                     setForm(prev => ({
                       ...prev,
-                      eje_x: coords.lat.toString(), // Ensure coordinates are strings for input fields
+                      eje_x: coords.lat.toString(),
                       eje_y: coords.lng.toString()
                     }));
                   }} />
                 </div>
               </div>
 
-              {/* Comment Textarea */}
-              <div className="mb-3">
+                {/* Comment Textarea */}
+                <div className="mb-3">
                 <label className="form-label" htmlFor="comentario">
                   Comentario
                 </label>
@@ -164,23 +166,64 @@ const Paradas = () => {
                   onChange={handleChange}
                   placeholder="Información adicional sobre la parada..."
                 />
-              </div>
+                </div>
 
-              {/* Error and Success Messages */}
-              {error && <div className="alert alert-danger">{error}</div>}
-              {success && <div className="alert alert-success">{success}</div>}
+                {/* Direction Radio Buttons */}
+                <div className="mb-3">
+                <label className="form-label">Dirección</label>
+                <div className="form-check">
+                  <input
+                  type="radio"
+                  name="direction"
+                  className="form-check-input"
+                  id="directionAB"
+                  checked={form.ab && !form.ba}
+                  onChange={() => {
+                    setForm(prev => ({
+                    ...prev,
+                    ab: true,
+                    ba: false
+                    }));
+                  }}
+                  />
+                  <label className="form-check-label" htmlFor="directionAB">
+                  Desde A hasta B
+                  </label>
+                </div>
+                <div className="form-check">
+                  <input
+                  type="radio"
+                  name="direction"
+                  className="form-check-input"
+                  id="directionBA"
+                  checked={form.ba && !form.ab}
+                  onChange={() => {
+                    setForm(prev => ({
+                    ...prev,
+                    ab: false,
+                    ba: true
+                    }));
+                  }}
+                  />
+                  <label className="form-check-label" htmlFor="directionBA">
+                  Desde B hasta A
+                  </label>
+                </div>
+                </div>
 
-              {/* Form Action Buttons */}
+                {error && <div className="alert alert-danger">{error}</div>}
+                {success && <div className="alert alert-success">{success}</div>}
+
+                {/* Form Action Buttons */}
               <div className="d-flex justify-content-center gap-3 mt-3">
                 <button 
                   type="submit" 
                   className="btn btn-primary px-4" 
-                  disabled={loading} // Disable button when loading
+                  disabled={loading}
                 >
                   {loading ? (
                     <>
-                      {/* Spinner for loading state */}
-                      <output className="spinner-border spinner-border-sm me-2" aria-label="Cargando"></output>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                       {editMode ? "Actualizando..." : "Agregando..."}
                     </>
                   ) : (
@@ -191,7 +234,7 @@ const Paradas = () => {
                   <button
                     type="button"
                     className="btn btn-outline-secondary px-4"
-                    onClick={resetForm} // Reset form and exit edit mode
+                    onClick={resetForm}
                     disabled={loading}
                   >
                     Cancelar
@@ -207,38 +250,61 @@ const Paradas = () => {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h3 className="mb-0">Paradas registradas</h3>
             {/* Bus Filter Dropdown for the List */}
-            <div className="flex-grow-1 ms-3">
+            <div className="ms-5 flex-grow-1">
               <select
                 className="form-select form-select-sm"
                 value={selectedBusFilter}
                 onChange={handleBusFilterChange}
               >
-                <option value="">Todas las Rutas</option> {/* Option to show all stops */}
+                <option value="">Todas las Rutas</option>
                 {buses.map((bus) => (
                   <option key={bus.id} value={bus.id}>
-                    {bus.apodo} - {bus.nombre}
+                    {bus.apodo}
                   </option>
                 ))}
               </select>
             </div>
+
+            {/* New: Direction Filter Dropdown (conditionally rendered) */}
+            {selectedBusFilter && selectedBusDetails && (
+              <div className="flex-grow-1 ms-3">
+                <select
+                  className="form-select form-select-sm"
+                  value={selectedDirectionFilter}
+                  onChange={handleDirectionFilterChange}
+                >
+                  <option value="">Todas las Direcciones</option>
+                  {selectedBusDetails.inicio_a && selectedBusDetails.inicio_b && (
+                    <>
+                      <option value="ab">
+                         {selectedBusDetails.inicio_a} - {selectedBusDetails.inicio_b}
+                      </option>
+                      <option value="ba">
+                         {selectedBusDetails.inicio_b} - {selectedBusDetails.inicio_a}
+                      </option>
+                    </>
+                  )}
+                </select>
+              </div>
+            )}
+            
             <small className="text-muted ms-3">Total: {paradas.length} paradas</small>
           </div>
           
           {/* Conditional Rendering for Loading, Empty States, and Stops List */}
           {loading && paradas.length === 0 ? (
-            // Loading spinner when data is being fetched and no stops are loaded yet
             <div className="text-center py-5">
-              <output className="spinner-border text-primary">
+              <div className="spinner-border text-primary" role="status">
                 <span className="visually-hidden">Cargando...</span>
-              </output>
+              </div>
               <p className="mt-2 text-muted">Cargando paradas...</p>
             </div>
-          ) : paradas.length === 0 && selectedBusFilter !== "" ? (
-            // Message when no stops are found for the selected filtered route
+          ) : paradas.length === 0 && (selectedBusFilter !== "" || selectedDirectionFilter !== "") ? (
+            // Message when no stops are found for the selected filtered route/direction
             <div className="text-center py-5">
                 <div className="text-muted">
                     <i className="fas fa-map-marker-alt fa-3x mb-3"></i>
-                    <p>No hay paradas registradas para esta ruta.</p>
+                    <p>No hay paradas registradas para la ruta/dirección seleccionada.</p>
                 </div>
             </div>
           ) : paradas.length === 0 ? (
@@ -259,7 +325,6 @@ const Paradas = () => {
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <h5 className="card-title mb-1">{parada.nombre}</h5>
                         <div className="d-flex gap-2">
-                          {/* Edit Button */}
                           <button 
                             className="btn btn-sm btn-warning" 
                             onClick={() => handleEdit(parada)}
@@ -267,7 +332,6 @@ const Paradas = () => {
                           >
                             <i className="fas fa-edit"></i>
                           </button>
-                          {/* Delete Button */}
                           <button 
                             className="btn btn-sm btn-danger" 
                             onClick={() => handleDelete(parada.id)}
@@ -278,7 +342,6 @@ const Paradas = () => {
                         </div>
                       </div>
 
-                      {/* Bus Information */}
                       <div className="mb-2">
                         <small className="text-muted">Bus:</small>
                         <div className="fw-semibold text-primary">
@@ -286,7 +349,6 @@ const Paradas = () => {
                         </div>
                       </div>
 
-                      {/* Coordinates Information */}
                       {(parada.eje_x || parada.eje_y) && (
                         <div className="mb-2">
                           <small className="text-muted">Coordenadas:</small>
@@ -296,15 +358,23 @@ const Paradas = () => {
                         </div>
                       )}
 
-                      {/* Comment Information */}
                       {parada.comentario && (
                         <div className="mb-2">
                           <small className="text-muted">Comentario:</small>
                           <div className="small">{parada.comentario}</div>
                         </div>
                       )}
+                      
+                      {/* New: Display ab/ba status */}
+                      <div className="mb-2">
+                        <small className="text-muted">Dirección:</small>
+                        <div className="small">
+                          {parada.ab && <span className="badge bg-success me-1">A &rarr; B</span>}
+                          {parada.ba && <span className="badge bg-info">B &rarr; A</span>}
+                          {!parada.ab && !parada.ba && <span className="badge bg-secondary">N/A</span>}
+                        </div>
+                      </div>
 
-                      {/* Creation Date */}
                       <div className="mt-2">
                         <small className="text-muted">
                           Creado: {new Date(parada.created_at).toLocaleDateString('es-ES', {

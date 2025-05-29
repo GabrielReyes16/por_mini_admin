@@ -1,27 +1,35 @@
-import { useState, useEffect, useCallback } from "react"; // Import useCallback
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../supabaseClient";
 
-// The hook now accepts 'busId' as a parameter, which will be used for filtering.
-const useParadas = (busId) => {
+// The hook now accepts 'busId' and 'directionFilter' as parameters.
+const useParadas = (busId, directionFilter) => {
   const [paradas, setParadas] = useState([]);
   const [buses, setBuses] = useState([]);
-  const [form, setFormState] = useState({ // Renamed internal setter to setFormState for clarity
+  // New state to store details of the currently selected bus,
+  // specifically for 'inicio_a' and 'inicio_b' for the direction filter options.
+  const [selectedBusDetails, setSelectedBusDetails] = useState(null); 
+  const [form, setFormState] = useState({
     id: null,
     id_bus: "",
     eje_x: "",
     eje_y: "",
     nombre: "",
     comentario: "",
+    // Assuming 'ab' and 'ba' are boolean fields in your 'paraderos' table
+    // and should be part of the form if you want to manage them during add/edit.
+    // If not, you might remove them from the form state.
+    ab: false, 
+    ba: false,
   });
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Memoize fetchParadas to prevent unnecessary re-creations,
-  // which helps with useEffect dependencies.
+  // Memoized function to fetch paradas based on busId and directionFilter.
   const fetchParadas = useCallback(async () => {
     setLoading(true);
+    setError(null); // Clear previous errors
     try {
       let query = supabase
         .from("paraderos")
@@ -34,13 +42,19 @@ const useParadas = (busId) => {
           )
         `);
       
-      // Conditionally apply the filter based on the provided busId.
-      // If busId is an empty string (from "Todas las Rutas"), the filter is skipped.
-      if (busId) { // An empty string "" is falsy, so this correctly skips the filter
+      // Conditionally apply the bus filter.
+      if (busId) {
         query = query.eq('id_bus', busId);
       }
 
-      // Apply ordering regardless of filter
+      // Conditionally apply the direction filter based on 'ab' or 'ba' fields.
+      if (directionFilter === "ab") {
+        query = query.eq('ab', true);
+      } else if (directionFilter === "ba") {
+        query = query.eq('ba', true);
+      }
+
+      // Apply ordering regardless of other filters.
       query = query.order('nombre', { ascending: true }); 
 
       const { data, error } = await query;
@@ -48,7 +62,7 @@ const useParadas = (busId) => {
       if (!error) {
         setParadas(data);
       } else {
-        setError("Error al cargar las paradas.");
+        setError("Error al cargar las paradas: " + error.message);
         console.error("Error fetching paradas:", error);
       }
     } catch (err) {
@@ -57,14 +71,15 @@ const useParadas = (busId) => {
     } finally {
       setLoading(false);
     }
-  }, [busId]); // Re-create fetchParadas only when busId changes
+  }, [busId, directionFilter]); // Dependencies for useCallback
 
   // Fetch all buses once when the hook mounts.
+  // Now also selecting 'inicio_a' and 'inicio_b'.
   const fetchBuses = async () => {
     try {
       const { data, error } = await supabase
         .from("buses")
-        .select("id, apodo, nombre")
+        .select("id, apodo, nombre, inicio_a, inicio_b") // Include new fields
         .order('apodo', { ascending: true });
       
       if (!error) {
@@ -82,16 +97,29 @@ const useParadas = (busId) => {
     fetchBuses();
   }, []);
 
-  // Effect to fetch paradas whenever the busId filter changes.
-  // This includes the initial load when busId is an empty string.
+  // Effect to update selectedBusDetails whenever the busId or buses list changes.
+  useEffect(() => {
+    if (busId && buses.length > 0) {
+      const bus = buses.find(b => b.id.toString() === busId);
+      setSelectedBusDetails(bus || null);
+    } else {
+      setSelectedBusDetails(null); // Clear details if no bus is selected
+    }
+  }, [busId, buses]); // Dependencies for this effect
+
+  // Effect to fetch paradas whenever the busId or directionFilter changes.
   useEffect(() => {
     fetchParadas();
-  }, [fetchParadas]); // Dependency on fetchParadas (which itself depends on busId due to useCallback)
+  }, [fetchParadas]); // Dependency on memoized fetchParadas
 
   // Handler for form input changes.
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    // Handle checkboxes for 'ab' and 'ba' if they are part of the form
+    setFormState((prev) => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   // Exposed setter for the form state, primarily used by MapaSelector.
@@ -127,23 +155,23 @@ const useParadas = (busId) => {
 
     // Prepare data for Supabase, converting types as necessary.
     const dataToSave = {
-      id_bus: parseInt(form.id_bus), // Convert to integer
-      eje_x: form.eje_x ? parseFloat(form.eje_x) : null, // Convert to float or null
-      eje_y: form.eje_y ? parseFloat(form.eje_y) : null, // Convert to float or null
+      id_bus: parseInt(form.id_bus),
+      eje_x: form.eje_x ? parseFloat(form.eje_x) : null,
+      eje_y: form.eje_y ? parseFloat(form.eje_y) : null,
       nombre: form.nombre.trim(),
-      comentario: form.comentario.trim() || null, // Set to null if empty after trim
+      comentario: form.comentario.trim() || null,
+      ab: form.ab, // Include 'ab' field
+      ba: form.ba, // Include 'ba' field
     };
 
     try {
       let errorRes;
       if (editMode) {
-        // Update existing stop
         ({ error: errorRes } = await supabase
           .from("paraderos")
           .update(dataToSave)
           .eq("id", form.id));
       } else {
-        // Insert new stop
         ({ error: errorRes } = await supabase
           .from("paraderos")
           .insert([dataToSave]));
@@ -154,8 +182,8 @@ const useParadas = (busId) => {
         console.error("Supabase save error:", errorRes);
       } else {
         setSuccess(editMode ? "Parada actualizada con éxito." : "Parada agregada con éxito.");
-        resetForm(); // Clear the form
-        fetchParadas(); // Re-fetch paradas to update the list with the new/updated item
+        resetForm();
+        fetchParadas(); // Re-fetch paradas to update the list
       }
     } catch (err) {
       setError("Error al guardar la parada.");
@@ -169,21 +197,23 @@ const useParadas = (busId) => {
   const handleEdit = (parada) => {
     setFormState({
       id: parada.id,
-      id_bus: parada.id_bus.toString(), // Convert to string for select input
-      eje_x: parada.eje_x ? parada.eje_x.toString() : "", // Convert to string or empty
-      eje_y: parada.eje_y ? parada.eje_y.toString() : "", // Convert to string or empty
+      id_bus: parada.id_bus.toString(),
+      eje_x: parada.eje_x ? parada.eje_x.toString() : "",
+      eje_y: parada.eje_y ? parada.eje_y.toString() : "",
       nombre: parada.nombre,
       comentario: parada.comentario || "",
+      ab: parada.ab || false, // Populate ab
+      ba: parada.ba || false, // Populate ba
     });
-    setEditMode(true); // Enable edit mode
+    setEditMode(true);
     setError(null);
     setSuccess(null);
   };
 
   // Handler to delete a stop.
   const handleDelete = async (id) => {
-    // IMPORTANT: Avoid using window.confirm in production if you need custom UI.
-    // For this environment, it's kept as per original code.
+    // IMPORTANT: Use a custom modal for confirmation in production.
+    // For this environment, window.confirm is used as per previous code.
     if (!window.confirm("¿Está seguro de que desea eliminar esta parada?")) {
       return;
     }
@@ -219,8 +249,10 @@ const useParadas = (busId) => {
       eje_y: "",
       nombre: "",
       comentario: "",
+      ab: false,
+      ba: false,
     });
-    setEditMode(false); // Exit edit mode
+    setEditMode(false);
     setError(null);
     setSuccess(null);
   };
@@ -229,6 +261,7 @@ const useParadas = (busId) => {
   return {
     paradas,
     buses,
+    selectedBusDetails, // Return the new state
     form,
     editMode,
     error,
@@ -240,7 +273,7 @@ const useParadas = (busId) => {
     handleDelete,
     resetForm,
     setForm,
-    fetchParadas, // Explicitly return fetchParadas
+    fetchParadas,
   };
 };
 

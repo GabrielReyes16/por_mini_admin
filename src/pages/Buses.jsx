@@ -11,6 +11,8 @@ const Buses = () => {
     apodo: "",
     color: "",
     url_foto: "",
+    inicio_a: "",
+    inicio_b: ""
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -63,6 +65,8 @@ const Buses = () => {
       apodo: form.apodo,
       color: form.color,
       url_foto: urlFoto,
+      inicio_a: form.inicio_a,
+      inicio_b: form.inicio_b
     };
 
     let errorRes;
@@ -79,7 +83,7 @@ const Buses = () => {
       setError("Error al guardar el bus.");
     } else {
       setSuccess(editMode ? "Bus actualizado con éxito." : "Bus agregado con éxito.");
-      setForm({ id: null, nombre: "", apodo: "", color: "", url_foto: "" });
+      setForm({ id: null, nombre: "", apodo: "", color: "", url_foto: "", inicio_a: "", inicio_b: "" });
       setFile(null);
       setPreview(null);
       setEditMode(false);
@@ -140,6 +144,27 @@ const Buses = () => {
                   required
                 />
               </div>
+              <div className="mb-2">
+                <label className="form-label" htmlFor="inicio_a">Inicio A</label>
+                <input
+                  type="text"
+                  name="inicio_a"
+                  className="form-control"
+                  value={form.inicio_a}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="mb-2">  
+                <label className="form-label" htmlFor="inicio_b">Inicio B</label>
+                <input
+                  type="text"
+                  name="inicio_b"
+                  className="form-control"
+                  value={form.inicio_b}
+                  onChange={handleChange}
+                />
+              </div>
+
               <div className="mb-3">
                 <label className="form-label" htmlFor="foto">Foto</label>
                 <input
@@ -167,7 +192,7 @@ const Buses = () => {
                     className="btn btn-outline-secondary"
                     onClick={() => {
                       setEditMode(false);
-                      setForm({ id: null, nombre: "", apodo: "", color: "", url_foto: "" });
+                      setForm({ id: null, nombre: "", apodo: "", color: "", url_foto: "", inicio_a: "", inicio_b: "" });
                       setFile(null);
                       setPreview(null);
                       setError(null);
@@ -198,10 +223,9 @@ const Buses = () => {
                     />
                   )}
                   <div className="card-body">
-                    <h5 className="card-title">{bus.nombre}</h5>
+                    <h5 className="card-title">{bus.nombre} - {bus.apodo}</h5>
                     <p className="card-text mb-3">
-                      <strong>Apodo:</strong> {bus.apodo}<br />
-                      <strong>Color:</strong> {bus.color}
+                      <strong>Desde</strong> {bus.inicio_a} <strong>hasta </strong> {bus.inicio_b}<br />
                     </p>
                     <div className="d-flex justify-content-between">
                       <button className="btn btn-sm btn-warning" onClick={() => handleEdit(bus)}>
