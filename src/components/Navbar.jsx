@@ -37,6 +37,9 @@ const Navbar = () => {
             <li>
               <Link className="nav-link" to="/paradas">Paradas</Link>
             </li>
+            <li>
+              <Link className="nav-link" to="/dataparadas">Data en JSON</Link>
+            </li>
           </ul>
         </div>
       </div>
